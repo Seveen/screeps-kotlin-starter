@@ -1,4 +1,4 @@
-import starter.gameLoop
+import yggdrasil.gameLoop
 
 /**
  * Entry point

@@ -1,11 +1,17 @@
-package starter
-
+package yggdrasil
 
 import screeps.api.*
 import screeps.api.structures.StructureSpawn
 import screeps.utils.isEmpty
 import screeps.utils.unsafe.delete
 import screeps.utils.unsafe.jsObject
+import yggdrasil.creeps.memoryFactory.BasicCreepMemoryImprint
+import yggdrasil.creeps.MemoryImprint
+import yggdrasil.creeps.upgrader.upgrade
+import yggdrasil.creeps.builder.build
+import yggdrasil.creeps.memoryFactory.BuilderMemoryImprint
+import yggdrasil.creeps.memoryFactory.UpgraderMemoryImprint
+import yggdrasil.creeps.memoryFactory.role
 
 fun gameLoop() {
     val mainSpawn: StructureSpawn = Game.spawns.values.firstOrNull() ?: return
@@ -19,14 +25,16 @@ fun gameLoop() {
     // build a few extensions so we can have 550 energy
     val controller = mainSpawn.room.controller
     if (controller != null && controller.level >= 2) {
+        val x = mainSpawn.pos.x
+        val y = mainSpawn.pos.y
         when (controller.room.find(FIND_MY_STRUCTURES).count { it.structureType == STRUCTURE_EXTENSION }) {
-            0 -> controller.room.createConstructionSite(29, 27, STRUCTURE_EXTENSION)
-            1 -> controller.room.createConstructionSite(28, 27, STRUCTURE_EXTENSION)
-            2 -> controller.room.createConstructionSite(27, 27, STRUCTURE_EXTENSION)
-            3 -> controller.room.createConstructionSite(26, 27, STRUCTURE_EXTENSION)
-            4 -> controller.room.createConstructionSite(25, 27, STRUCTURE_EXTENSION)
-            5 -> controller.room.createConstructionSite(24, 27, STRUCTURE_EXTENSION)
-            6 -> controller.room.createConstructionSite(23, 27, STRUCTURE_EXTENSION)
+            0 -> controller.room.createConstructionSite(x + 1, y + 1, STRUCTURE_EXTENSION)
+            1 -> controller.room.createConstructionSite(x - 1, y - 1, STRUCTURE_EXTENSION)
+            2 -> controller.room.createConstructionSite(x - 1, y + 1, STRUCTURE_EXTENSION)
+            3 -> controller.room.createConstructionSite(x + 1, y - 1, STRUCTURE_EXTENSION)
+            4 -> controller.room.createConstructionSite(x + 2, y - 2, STRUCTURE_EXTENSION)
+            5 -> controller.room.createConstructionSite(x + 2, y - 2, STRUCTURE_EXTENSION)
+            6 -> controller.room.createConstructionSite(x + 2, y - 2, STRUCTURE_EXTENSION)
         }
     }
 
@@ -62,7 +70,6 @@ fun gameLoop() {
             else -> creep.pause()
         }
     }
-
 }
 
 private fun spawnCreeps(
@@ -82,14 +89,19 @@ private fun spawnCreeps(
         creeps.none { it.memory.role == Role.UPGRADER } -> Role.UPGRADER
 
         spawn.room.find(FIND_MY_CONSTRUCTION_SITES).isNotEmpty() &&
-                creeps.count { it.memory.role == Role.HARVESTER } < 2 -> Role.BUILDER
+                creeps.count { it.memory.role == Role.BUILDER } < 3 -> Role.BUILDER
 
         else -> return
     }
 
     val newName = "${role.name}_${Game.time}"
+    val memoryImprint: MemoryImprint = when (role) {
+        Role.UPGRADER -> UpgraderMemoryImprint()
+        Role.BUILDER -> BuilderMemoryImprint()
+        else -> BasicCreepMemoryImprint()
+    }
     val code = spawn.spawnCreep(body, newName, options {
-        memory = jsObject<CreepMemory> { this.role = role }
+        memory = memoryImprint.initMemory()
     })
 
     when (code) {
