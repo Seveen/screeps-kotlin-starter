@@ -5,13 +5,14 @@ import screeps.api.structures.StructureSpawn
 import screeps.utils.isEmpty
 import screeps.utils.unsafe.delete
 import screeps.utils.unsafe.jsObject
-import yggdrasil.creeps.memoryFactory.BasicCreepMemoryImprint
 import yggdrasil.creeps.MemoryImprint
+import yggdrasil.creeps.bodyFactory.BodyFactory
 import yggdrasil.creeps.upgrader.upgrade
 import yggdrasil.creeps.builder.build
-import yggdrasil.creeps.memoryFactory.BuilderMemoryImprint
-import yggdrasil.creeps.memoryFactory.UpgraderMemoryImprint
-import yggdrasil.creeps.memoryFactory.role
+import yggdrasil.creeps.memoryFactory.*
+import yggdrasil.creeps.miner.mine
+import yggdrasil.creeps.repairer.maintain
+import yggdrasil.creeps.runner.run
 
 fun gameLoop() {
     val mainSpawn: StructureSpawn = Game.spawns.values.firstOrNull() ?: return
@@ -67,6 +68,9 @@ fun gameLoop() {
             Role.HARVESTER -> creep.harvest()
             Role.BUILDER -> creep.build()
             Role.UPGRADER -> creep.upgrade(mainSpawn.room.controller!!)
+            Role.REPAIRER -> creep.maintain()
+            Role.RUNNER -> creep.run()
+            Role.MINER -> creep.mine()
             else -> creep.pause()
         }
     }
@@ -77,27 +81,40 @@ private fun spawnCreeps(
         spawn: StructureSpawn
 ) {
 
-    val body = arrayOf<BodyPartConstant>(WORK, CARRY, MOVE)
-
-    if (spawn.room.energyAvailable < body.sumBy { BODYPART_COST[it]!! }) {
-        return
-    }
-
     val role: Role = when {
         creeps.count { it.memory.role == Role.HARVESTER } < 2 -> Role.HARVESTER
 
         creeps.none { it.memory.role == Role.UPGRADER } -> Role.UPGRADER
 
         spawn.room.find(FIND_MY_CONSTRUCTION_SITES).isNotEmpty() &&
-                creeps.count { it.memory.role == Role.BUILDER } < 3 -> Role.BUILDER
+                creeps.count { it.memory.role == Role.BUILDER } < 2 -> Role.BUILDER
+
+        creeps.count { it.memory.role == Role.REPAIRER } < 2 -> Role.REPAIRER
+
+        creeps.count { it.memory.role == Role.MINER } < spawn.room.find(FIND_MY_STRUCTURES, options {
+            filter = {it.structureType == STRUCTURE_CONTAINER}
+        }).size -> Role.MINER
+
+        creeps.count { it.memory.role == Role.RUNNER } < spawn.room.find(FIND_MY_STRUCTURES, options {
+            filter = {it.structureType == STRUCTURE_CONTAINER}
+        }).size -> Role.RUNNER
 
         else -> return
+    }
+
+    val body = BodyFactory.getBody(role)
+
+    if (spawn.room.energyAvailable < body.sumBy { BODYPART_COST[it]!! }) {
+        return
     }
 
     val newName = "${role.name}_${Game.time}"
     val memoryImprint: MemoryImprint = when (role) {
         Role.UPGRADER -> UpgraderMemoryImprint()
         Role.BUILDER -> BuilderMemoryImprint()
+        Role.REPAIRER -> RepairerMemoryImprint()
+        Role.RUNNER -> RunnerMemoryImprint()
+        Role.MINER -> MinerMemoryImprint()
         else -> BasicCreepMemoryImprint()
     }
     val code = spawn.spawnCreep(body, newName, options {

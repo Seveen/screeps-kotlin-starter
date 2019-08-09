@@ -3,13 +3,17 @@ package yggdrasil
 import screeps.api.*
 import yggdrasil.creeps.memoryFactory.pause
 import yggdrasil.creeps.memoryFactory.role
+import kotlin.random.Random
 
 
 enum class Role {
     UNASSIGNED,
     HARVESTER,
+    MINER,
+    RUNNER,
     BUILDER,
-    UPGRADER
+    UPGRADER,
+    REPAIRER
 }
 
 fun Creep.pause() {
@@ -22,7 +26,6 @@ fun Creep.pause() {
         memory.role = Role.HARVESTER
     }
 }
-
 
 fun Creep.harvest(fromRoom: Room = this.room, toRoom: Room = this.room) {
     if (carry.energy < carryCapacity) {

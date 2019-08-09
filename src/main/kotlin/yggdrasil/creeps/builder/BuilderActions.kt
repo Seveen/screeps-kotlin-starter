@@ -3,6 +3,7 @@ package yggdrasil.creeps.builder
 import screeps.api.*
 import yggdrasil.creeps.memoryFactory.building
 
+//TODO: rewrite cleanly
 fun Creep.build(assignedRoom: Room = this.room) {
     if (memory.building && carry.energy == 0) {
         memory.building = false
@@ -32,9 +33,28 @@ fun Creep.build(assignedRoom: Room = this.room) {
             }
         }
     } else {
-        val sources = room.find(FIND_SOURCES)
-        if (harvest(sources[1]) == ERR_NOT_IN_RANGE) {
-            moveTo(sources[1].pos)
+        val storage = assignedRoom.find(FIND_MY_STRUCTURES)
+            .filter { (it.structureType == STRUCTURE_EXTENSION || it.structureType == STRUCTURE_SPAWN) }
+            .filter { it.unsafeCast<EnergyContainer>().energy < it.unsafeCast<EnergyContainer>().energyCapacity }
+
+        storage[0].let {
+            when (withdraw(it, RESOURCE_ENERGY)) {
+                ERR_NOT_IN_RANGE -> moveTo(it)
+                OK -> {
+                    val deltaX = when  {
+                        (it.pos.x - pos.x) > 0 -> 1
+                        (it.pos.x - pos.x) < 0 -> -1
+                        else -> 0
+                    }
+                    val deltaY = when  {
+                        (it.pos.y - pos.y) > 0 -> 1
+                        (it.pos.y - pos.y) < 0 -> -1
+                        else -> 0
+                    }
+                    moveTo(pos.x - deltaX, pos.y - deltaY)
+                }
+                else -> {}
+            }
         }
     }
 
