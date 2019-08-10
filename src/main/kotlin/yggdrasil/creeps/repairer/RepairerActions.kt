@@ -3,6 +3,9 @@ package yggdrasil.creeps.repairer
 import screeps.api.*
 import screeps.api.structures.Structure
 import yggdrasil.creeps.memoryFactory.repairing
+import yggdrasil.creeps.memoryFactory.upgrading
+import yggdrasil.extensions.findEnergyStructures
+import yggdrasil.gtfo
 
 
 fun Creep.maintain(assignedRoom: Room = this.room) {
@@ -18,14 +21,18 @@ fun Creep.maintain(assignedRoom: Room = this.room) {
             }
         }
         false -> {
-            val sources = room.find(FIND_SOURCES)
+            val sources = room.findEnergyStructures()
             when (carry.energy == carryCapacity) {
                 true -> memory.repairing = true
-                false -> when (harvest(sources[0])) {
+                false -> when (withdraw(sources[0], RESOURCE_ENERGY)) {
                     ERR_NOT_IN_RANGE -> moveTo(sources[0].pos)
+                    ERR_NOT_ENOUGH_RESOURCES -> gtfo(sources[0])
                     else -> {}
                 }
             }
+            if (carry.energy == carryCapacity) {
+                memory.repairing = true
+            } else {}
         }
     }
 }

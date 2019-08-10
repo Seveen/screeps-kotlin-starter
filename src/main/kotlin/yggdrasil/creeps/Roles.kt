@@ -1,8 +1,10 @@
 package yggdrasil
 
 import screeps.api.*
+import screeps.api.structures.Structure
 import yggdrasil.creeps.memoryFactory.pause
 import yggdrasil.creeps.memoryFactory.role
+import yggdrasil.extensions.findNotFullEnergyStructures
 import kotlin.random.Random
 
 
@@ -29,19 +31,37 @@ fun Creep.pause() {
 
 fun Creep.harvest(fromRoom: Room = this.room, toRoom: Room = this.room) {
     if (carry.energy < carryCapacity) {
-        val sources = fromRoom.find(FIND_SOURCES)
-        if (harvest(sources[0]) == ERR_NOT_IN_RANGE) {
-            moveTo(sources[0].pos)
+        val onTheGround = toRoom.find(FIND_DROPPED_RESOURCES, options {
+            filter = {
+                it.resourceType == RESOURCE_ENERGY
+            }
+        })
+        if (onTheGround.isNotEmpty()) {
+            if (pickup(onTheGround[0]) == ERR_NOT_IN_RANGE) {
+                moveTo(onTheGround[0].pos)
+            }
+        } else {
+            val sources = fromRoom.find(FIND_SOURCES)
+            if (harvest(sources[1]) == ERR_NOT_IN_RANGE) {
+                moveTo(sources[1].pos)
+            }
         }
     } else {
-        val targets = toRoom.find(FIND_MY_STRUCTURES)
-                .filter { (it.structureType == STRUCTURE_EXTENSION || it.structureType == STRUCTURE_SPAWN) }
-                .filter { it.unsafeCast<EnergyContainer>().energy < it.unsafeCast<EnergyContainer>().energyCapacity }
+        val targets = toRoom.findNotFullEnergyStructures()
 
         if (targets.isNotEmpty()) {
             if (transfer(targets[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                 moveTo(targets[0].pos)
             }
         }
+    }
+}
+
+fun Creep.gtfo(structure: Structure) {
+    val deltaX = pos.x - structure.pos.x
+    val deltaY = pos.y - structure.pos.y
+
+    if (deltaX in -1..1 && deltaY in -1..1) {
+        moveTo(pos.x + deltaX, pos.y + deltaY)
     }
 }

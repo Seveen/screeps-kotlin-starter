@@ -11,7 +11,7 @@ class BasicCreepMemory() : CreepMemory {}
 class BasicCreepMemoryImprint : MemoryImprint {
     override fun initMemory(): CreepMemory {
         return jsObject {
-            this.role = Role.UNASSIGNED
+            this.role = Role.HARVESTER
         }
     }
 }

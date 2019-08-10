@@ -34,32 +34,9 @@ fun gameLoop() {
             2 -> controller.room.createConstructionSite(x - 1, y + 1, STRUCTURE_EXTENSION)
             3 -> controller.room.createConstructionSite(x + 1, y - 1, STRUCTURE_EXTENSION)
             4 -> controller.room.createConstructionSite(x + 2, y - 2, STRUCTURE_EXTENSION)
-            5 -> controller.room.createConstructionSite(x + 2, y - 2, STRUCTURE_EXTENSION)
-            6 -> controller.room.createConstructionSite(x + 2, y - 2, STRUCTURE_EXTENSION)
-        }
-    }
-
-    //spawn a big creep if we have plenty of energy
-    for ((_, room) in Game.rooms) {
-        if (room.energyAvailable >= 550) {
-            mainSpawn.spawnCreep(
-                    arrayOf(
-                            WORK,
-                            WORK,
-                            WORK,
-                            WORK,
-                            CARRY,
-                            MOVE,
-                            MOVE
-                    ),
-                    "HarvesterBig_${Game.time}",
-                    options {
-                        memory = jsObject<CreepMemory> {
-                            this.role = Role.HARVESTER
-                        }
-                    }
-            )
-            console.log("hurray!")
+            5 -> controller.room.createConstructionSite(x + 2, y + 2, STRUCTURE_EXTENSION)
+            6 -> controller.room.createConstructionSite(x - 2, y - 2, STRUCTURE_EXTENSION)
+            7 -> controller.room.createConstructionSite(x - 2, y + 2, STRUCTURE_EXTENSION)
         }
     }
 
@@ -81,23 +58,31 @@ private fun spawnCreeps(
         spawn: StructureSpawn
 ) {
 
-    val role: Role = when {
-        creeps.count { it.memory.role == Role.HARVESTER } < 2 -> Role.HARVESTER
+    val numberOfStorages = spawn.room.find(FIND_STRUCTURES, options {
+        filter = {it.structureType == STRUCTURE_CONTAINER}
+    }).size
 
-        creeps.none { it.memory.role == Role.UPGRADER } -> Role.UPGRADER
+    val role: Role = when {
+        creeps.isEmpty() -> Role.HARVESTER
+        creeps.count { it.memory.role == Role.HARVESTER } < 4 -> Role.HARVESTER
+
+        creeps.count { it.memory.role == Role.MINER } == 0 -> Role.MINER
+        creeps.count { it.memory.role == Role.RUNNER } < numberOfStorages -> Role.RUNNER
 
         spawn.room.find(FIND_MY_CONSTRUCTION_SITES).isNotEmpty() &&
-                creeps.count { it.memory.role == Role.BUILDER } < 2 -> Role.BUILDER
+                creeps.count { it.memory.role == Role.BUILDER } == 0 -> Role.BUILDER
 
-        creeps.count { it.memory.role == Role.REPAIRER } < 2 -> Role.REPAIRER
+        creeps.count { it.memory.role == Role.RUNNER } < numberOfStorages*2 -> Role.RUNNER
+        creeps.count { it.memory.role == Role.MINER } < numberOfStorages*2 -> Role.MINER
 
-        creeps.count { it.memory.role == Role.MINER } < spawn.room.find(FIND_MY_STRUCTURES, options {
-            filter = {it.structureType == STRUCTURE_CONTAINER}
-        }).size -> Role.MINER
+        creeps.count { it.memory.role == Role.UPGRADER } < 9 -> Role.UPGRADER
 
-        creeps.count { it.memory.role == Role.RUNNER } < spawn.room.find(FIND_MY_STRUCTURES, options {
-            filter = {it.structureType == STRUCTURE_CONTAINER}
-        }).size -> Role.RUNNER
+        spawn.room.find(FIND_MY_CONSTRUCTION_SITES).isNotEmpty() &&
+                creeps.count { it.memory.role == Role.BUILDER } < 3 -> Role.BUILDER
+
+        creeps.count { it.memory.role == Role.REPAIRER } < 3 -> Role.REPAIRER
+
+
 
         else -> return
     }

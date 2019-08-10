@@ -8,12 +8,12 @@ import yggdrasil.Role
 
 object BodyFactory {
 
-    private val UpgraderBody = arrayOf<BodyPartConstant>(WORK, CARRY, CARRY, MOVE, MOVE)
-    private val RepairerBody = arrayOf<BodyPartConstant>(WORK, CARRY, CARRY, MOVE, MOVE)
-    private val BuilderBody = arrayOf<BodyPartConstant>(WORK, CARRY, CARRY, MOVE, MOVE)
-    private val HarvesterBody = arrayOf<BodyPartConstant>(WORK, CARRY, CARRY, MOVE, MOVE)
+    private val UpgraderBody = arrayOf<BodyPartConstant>(WORK ,WORK, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE)
+    private val RepairerBody = arrayOf<BodyPartConstant>(WORK ,WORK, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE)
+    private val BuilderBody = arrayOf<BodyPartConstant>(WORK ,WORK, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE)
+    private val HarvesterBody = arrayOf<BodyPartConstant>(WORK, CARRY, MOVE)
     private val MinerBody = arrayOf<BodyPartConstant>(WORK, WORK, WORK, CARRY, MOVE)
-    private val RunnerBody = arrayOf<BodyPartConstant>(WORK, CARRY, CARRY, MOVE, MOVE)
+    private val RunnerBody = arrayOf<BodyPartConstant>(CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE)
     private val BasicBody = arrayOf<BodyPartConstant>(WORK, CARRY, MOVE)
 
     fun getBody(role: Role): Array<BodyPartConstant> {

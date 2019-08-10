@@ -1,11 +1,11 @@
 package yggdrasil.creeps.upgrader
 
-import screeps.api.Creep
-import screeps.api.ERR_NOT_ENOUGH_ENERGY
-import screeps.api.ERR_NOT_IN_RANGE
-import screeps.api.FIND_SOURCES
+import screeps.api.*
 import screeps.api.structures.StructureController
+import yggdrasil.creeps.memoryFactory.building
 import yggdrasil.creeps.memoryFactory.upgrading
+import yggdrasil.extensions.findEnergyStructures
+import yggdrasil.gtfo
 
 fun Creep.upgrade(controller: StructureController) {
     when(memory.upgrading) {
@@ -17,12 +17,22 @@ fun Creep.upgrade(controller: StructureController) {
             }
         }
         false -> {
-            val sources = room.find(FIND_SOURCES)
-            when (carry.energy == carryCapacity) {
-                true -> memory.upgrading = true
-                false -> when (harvest(sources[0])) {
-                    ERR_NOT_IN_RANGE -> moveTo(sources[0].pos)
-                    else -> {}
+            val storage = room.findEnergyStructures()
+
+            storage.firstOrNull()?.let {
+                if (room.energyAvailable >= 400) {
+                    when (withdraw(it, RESOURCE_ENERGY)) {
+                        ERR_NOT_IN_RANGE -> moveTo(it)
+                        ERR_NOT_ENOUGH_RESOURCES -> gtfo(it)
+                        else -> if (carry.energy == carryCapacity) {
+                            memory.upgrading = true
+                        } else {}
+                    }
+                } else {
+                    gtfo(it)
+                    if (carry.energy == carryCapacity) {
+                        memory.upgrading = true
+                    } else {}
                 }
             }
         }
