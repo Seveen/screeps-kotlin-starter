@@ -4,6 +4,7 @@ import screeps.api.*
 import screeps.api.structures.Structure
 import yggdrasil.creeps.memoryFactory.pause
 import yggdrasil.creeps.memoryFactory.role
+import yggdrasil.extensions.ResourceAmountComparator
 import yggdrasil.extensions.findNotFullEnergyStructures
 import kotlin.random.Random
 
@@ -35,33 +36,24 @@ fun Creep.harvest(fromRoom: Room = this.room, toRoom: Room = this.room) {
             filter = {
                 it.resourceType == RESOURCE_ENERGY
             }
-        })
+        }).sortedWith(ResourceAmountComparator())
         if (onTheGround.isNotEmpty()) {
             if (pickup(onTheGround[0]) == ERR_NOT_IN_RANGE) {
                 moveTo(onTheGround[0].pos)
             }
         } else {
-            val sources = fromRoom.find(FIND_SOURCES)
+            val sources = toRoom.find(FIND_SOURCES)
             if (harvest(sources[1]) == ERR_NOT_IN_RANGE) {
                 moveTo(sources[1].pos)
             }
         }
     } else {
-        val targets = toRoom.findNotFullEnergyStructures()
+        val targets = fromRoom.findNotFullEnergyStructures()
 
         if (targets.isNotEmpty()) {
             if (transfer(targets[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
                 moveTo(targets[0].pos)
             }
         }
-    }
-}
-
-fun Creep.gtfo(structure: Structure) {
-    val deltaX = pos.x - structure.pos.x
-    val deltaY = pos.y - structure.pos.y
-
-    if (deltaX in -1..1 && deltaY in -1..1) {
-        moveTo(pos.x + deltaX, pos.y + deltaY)
     }
 }

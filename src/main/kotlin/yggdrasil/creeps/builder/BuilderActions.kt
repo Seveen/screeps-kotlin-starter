@@ -2,9 +2,8 @@ package yggdrasil.creeps.builder
 
 import screeps.api.*
 import yggdrasil.creeps.memoryFactory.building
-import yggdrasil.creeps.memoryFactory.repairing
 import yggdrasil.extensions.findEnergyStructures
-import yggdrasil.gtfo
+import yggdrasil.extensions.gtfo
 
 fun Creep.build(assignedRoom: Room = this.room) {
 

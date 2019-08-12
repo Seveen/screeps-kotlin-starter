@@ -5,7 +5,6 @@ import screeps.api.structures.StructureSpawn
 import screeps.api.structures.StructureTower
 import screeps.utils.isEmpty
 import screeps.utils.unsafe.delete
-import screeps.utils.unsafe.jsObject
 import yggdrasil.creeps.MemoryImprint
 import yggdrasil.creeps.bodyFactory.BodyFactory
 import yggdrasil.creeps.upgrader.upgrade
@@ -14,6 +13,7 @@ import yggdrasil.creeps.memoryFactory.*
 import yggdrasil.creeps.miner.mine
 import yggdrasil.creeps.repairer.maintain
 import yggdrasil.creeps.runner.run
+import yggdrasil.extensions.energyContent
 import yggdrasil.extensions.findLowestStructureToRepair
 
 fun gameLoop() {
@@ -57,9 +57,15 @@ fun gameLoop() {
     for ((_, structure) in Game.structures) {
         when (structure.structureType) {
             STRUCTURE_TOWER -> {
+                val enemies = structure.room.find(FIND_HOSTILE_CREEPS).firstOrNull()
+                enemies?.let {
+                    (structure as StructureTower).attack(it)
+                }
                 val repairTarget = structure.room.findLowestStructureToRepair()
                 repairTarget?.let {
-                    (structure as StructureTower).repair(it)
+                    if (it.energyContent > 75) {
+                        (structure as StructureTower).repair(it)
+                    }
                 }
             }
             else -> {}
@@ -72,24 +78,24 @@ private fun spawnCreeps(
         spawn: StructureSpawn
 ) {
 
-    val numberOfStorages = spawn.room.find(FIND_STRUCTURES, options {
+    val numberOfContainers = spawn.room.find(FIND_STRUCTURES, options {
         filter = {it.structureType == STRUCTURE_CONTAINER}
     }).size
 
     val role: Role = when {
         creeps.isEmpty() -> Role.HARVESTER
-        creeps.count { it.memory.role == Role.HARVESTER } < 2 -> Role.HARVESTER
+        creeps.count { it.memory.role == Role.HARVESTER } < 2 && creeps.count { it.memory.role == Role.MINER } < 2 -> Role.HARVESTER
 
         creeps.count { it.memory.role == Role.MINER } == 0 -> Role.MINER
-        creeps.count { it.memory.role == Role.RUNNER } < numberOfStorages -> Role.RUNNER
+        creeps.count { it.memory.role == Role.RUNNER } == 0 -> Role.RUNNER
 
         spawn.room.find(FIND_MY_CONSTRUCTION_SITES).isNotEmpty() &&
                 creeps.count { it.memory.role == Role.BUILDER } == 0 -> Role.BUILDER
 
-        creeps.count { it.memory.role == Role.RUNNER } < numberOfStorages*2 -> Role.RUNNER
-        creeps.count { it.memory.role == Role.MINER } < numberOfStorages*2 -> Role.MINER
+        creeps.count { it.memory.role == Role.RUNNER } < numberOfContainers -> Role.RUNNER
+        creeps.count { it.memory.role == Role.MINER } < numberOfContainers*2 -> Role.MINER
 
-        creeps.count { it.memory.role == Role.UPGRADER } < 9 -> Role.UPGRADER
+        creeps.count { it.memory.role == Role.UPGRADER } < 5-> Role.UPGRADER
 
         creeps.count { it.memory.role == Role.REPAIRER } < 1 -> Role.REPAIRER
 

@@ -1,12 +1,10 @@
 package yggdrasil.creeps.repairer
 
 import screeps.api.*
-import screeps.api.structures.Structure
 import yggdrasil.creeps.memoryFactory.repairing
-import yggdrasil.creeps.memoryFactory.upgrading
 import yggdrasil.extensions.findEnergyStructures
 import yggdrasil.extensions.findLowestStructureToRepair
-import yggdrasil.gtfo
+import yggdrasil.extensions.gtfo
 
 
 fun Creep.maintain(assignedRoom: Room = this.room) {

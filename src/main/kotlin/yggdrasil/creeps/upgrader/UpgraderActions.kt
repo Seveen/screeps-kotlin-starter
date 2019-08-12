@@ -2,10 +2,10 @@ package yggdrasil.creeps.upgrader
 
 import screeps.api.*
 import screeps.api.structures.StructureController
-import yggdrasil.creeps.memoryFactory.building
 import yggdrasil.creeps.memoryFactory.upgrading
 import yggdrasil.extensions.findEnergyStructures
-import yggdrasil.gtfo
+import yggdrasil.extensions.gtfo
+
 
 fun Creep.upgrade(controller: StructureController) {
     when(memory.upgrading) {
