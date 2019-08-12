@@ -2,6 +2,7 @@ package yggdrasil
 
 import screeps.api.*
 import screeps.api.structures.StructureSpawn
+import screeps.api.structures.StructureTower
 import screeps.utils.isEmpty
 import screeps.utils.unsafe.delete
 import screeps.utils.unsafe.jsObject
@@ -13,6 +14,7 @@ import yggdrasil.creeps.memoryFactory.*
 import yggdrasil.creeps.miner.mine
 import yggdrasil.creeps.repairer.maintain
 import yggdrasil.creeps.runner.run
+import yggdrasil.extensions.findLowestStructureToRepair
 
 fun gameLoop() {
     val mainSpawn: StructureSpawn = Game.spawns.values.firstOrNull() ?: return
@@ -51,6 +53,18 @@ fun gameLoop() {
             else -> creep.pause()
         }
     }
+
+    for ((_, structure) in Game.structures) {
+        when (structure.structureType) {
+            STRUCTURE_TOWER -> {
+                val repairTarget = structure.room.findLowestStructureToRepair()
+                repairTarget?.let {
+                    (structure as StructureTower).repair(it)
+                }
+            }
+            else -> {}
+        }
+    }
 }
 
 private fun spawnCreeps(
@@ -64,7 +78,7 @@ private fun spawnCreeps(
 
     val role: Role = when {
         creeps.isEmpty() -> Role.HARVESTER
-        creeps.count { it.memory.role == Role.HARVESTER } < 4 -> Role.HARVESTER
+        creeps.count { it.memory.role == Role.HARVESTER } < 2 -> Role.HARVESTER
 
         creeps.count { it.memory.role == Role.MINER } == 0 -> Role.MINER
         creeps.count { it.memory.role == Role.RUNNER } < numberOfStorages -> Role.RUNNER
@@ -77,12 +91,14 @@ private fun spawnCreeps(
 
         creeps.count { it.memory.role == Role.UPGRADER } < 9 -> Role.UPGRADER
 
+        creeps.count { it.memory.role == Role.REPAIRER } < 1 -> Role.REPAIRER
+
+
         spawn.room.find(FIND_MY_CONSTRUCTION_SITES).isNotEmpty() &&
                 creeps.count { it.memory.role == Role.BUILDER } < 3 -> Role.BUILDER
 
-        creeps.count { it.memory.role == Role.REPAIRER } < 3 -> Role.REPAIRER
-
-
+        creeps.count { it.memory.role == Role.REPAIRER } < 3 &&
+            spawn.room.find(FIND_STRUCTURES).count { it.structureType == STRUCTURE_TOWER } == 0 -> Role.REPAIRER
 
         else -> return
     }

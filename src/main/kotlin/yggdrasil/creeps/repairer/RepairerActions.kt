@@ -5,13 +5,14 @@ import screeps.api.structures.Structure
 import yggdrasil.creeps.memoryFactory.repairing
 import yggdrasil.creeps.memoryFactory.upgrading
 import yggdrasil.extensions.findEnergyStructures
+import yggdrasil.extensions.findLowestStructureToRepair
 import yggdrasil.gtfo
 
 
 fun Creep.maintain(assignedRoom: Room = this.room) {
     when(memory.repairing) {
         true -> {
-            val target = findLowestStructureToRepair(assignedRoom)
+            val target = assignedRoom.findLowestStructureToRepair()
             target?.let {
                 when (this.repair(target)) {
                     ERR_NOT_IN_RANGE -> moveTo(target)
@@ -37,18 +38,3 @@ fun Creep.maintain(assignedRoom: Room = this.room) {
     }
 }
 
-fun findLowestStructureToRepair(room: Room): Structure? {
-    val targets = room.find(FIND_STRUCTURES, options { filter = {
-        it.hits < it.hitsMax
-    }})
-
-    targets.sort { one, two ->
-        when {
-            one.hits < two.hits -> -1
-            one.hits > two.hits -> 1
-            else -> 0
-        }
-    }
-
-    return targets[0]
-}

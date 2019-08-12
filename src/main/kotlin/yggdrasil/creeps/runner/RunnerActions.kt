@@ -6,6 +6,8 @@ import yggdrasil.Role
 import yggdrasil.creeps.memoryFactory.assignedSource
 import yggdrasil.creeps.memoryFactory.role
 import yggdrasil.creeps.memoryFactory.running
+import yggdrasil.extensions.findEnergyStructures
+import yggdrasil.extensions.findNotFullEnergyStructures
 
 fun Creep.run(assignedRoom: Room = this.room) {
     if (memory.assignedSource == "") {
@@ -32,9 +34,7 @@ fun Creep.run(assignedRoom: Room = this.room) {
     }
 
     val source = Game.getObjectById<Structure>(memory.assignedSource)
-    val storage = assignedRoom.find(FIND_MY_STRUCTURES)
-            .filter { (it.structureType == STRUCTURE_EXTENSION || it.structureType == STRUCTURE_SPAWN) }
-            .filter { it.unsafeCast<EnergyContainer>().energy < it.unsafeCast<EnergyContainer>().energyCapacity }
+    val storage = assignedRoom.findNotFullEnergyStructures()
     source?.let { actualSource ->
         storage.firstOrNull()?.let {actualStorage ->
             when (memory.running) {
